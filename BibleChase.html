@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bible Chase</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    #app {
+        background: #ffffff;
+        padding: 20px 24px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        max-width: 600px;
+        width: 100%;
+        box-sizing: border-box;
+        position: relative;
+    }
+    h1, h2, h3 {
+        text-align: center;
+        margin-top: 0;
+    }
+    .hidden {
+        display: none;
+    }
+    .center {
+        text-align: center;
+    }
+    button {
+        padding: 10px 16px;
+        margin: 6px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+        font-size: 14px;
+    }
+    button.secondary {
+        background: #6b7280;
+    }
+    button:disabled {
+        background: #9ca3af;
+        cursor: default;
+    }
+    #questionText {
+        margin: 20px 0;
+        font-size: 18px;
+        text-align: center;
+    }
+    #answerInput {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        box-sizing: border-box;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+    }
+    #statusBar {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        font-size: 14px;
+    }
+    #comboContainer {
+        margin-top: 10px;
+        background: #e5e7eb;
+        border-radius: 6px;
+        height: 18px;
+        overflow: hidden;
+        position: relative;
+    }
+    #comboFill {
+        height: 100%;
+        width: 0%;
+        background: #10b981;
+        transition: width 0.2s ease-in-out;
+    }
+    #comboContainer.combo-complete #comboFill {
+        animation: comboComplete 0.6s ease-in-out;
+    }
+    @keyframes comboComplete {
+        0% { width: 100%; background: #10b981; transform: scaleX(1); }
+        20% { background: #f59e0b; transform: scaleX(1.05); }
+        40% { background: #f59e0b; transform: scaleX(1); }
+        60% { background: #10b981; transform: scaleX(1.02); }
+        100% { width: 0%; background: #10b981; transform: scaleX(1); }
+    }
+    #message {
+        margin-top: 12px;
+        text-align: center;
+        min-height: 20px;
+        font-size: 20px;
+    }
+    #resultDetails {
+        margin-top: 16px;
+        font-size: 15px;
+    }
+
+    /* New: game mode description box at the bottom */
+    #modeDescriptionBox {
+        margin-top: 16px;
+        padding: 10px 12px;
+        font-size: 13px;
+        line-height: 1.4;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+    }
+    #modeDescriptionBox h4 {
+        margin: 0 0 4px 0;
+        font-size: 13px;
+        font-weight: bold;
+    }
+    #modeDescriptionBox p {
+        margin: 4px 0;
+    }
+    #modeDescriptionBox span.label {
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+<div id="app">
+    <!-- Home Screen -->
+    <div id="homeScreen">
+        <h1>Bible Chase</h1>
+        <div class="center">
+            <h3>Select Game Mode</h3>
+            <button id="modeCountdownBtn">Countdown</button>
+            <button id="modeFrenzyBtn">Frenzy</button>
+        </div>
+    </div>
+
+    <!-- Difficulty Screen -->
+    <div id="difficultyScreen" class="hidden">
+        <h2 id="selectedModeTitle"></h2>
+        <div class="center">
+            <h3>Select Difficulty</h3>
+            <button id="difficultyNormalBtn">Normal</button>
+            <button id="difficultyExpertBtn">Expert</button>
+        </div>
+        <div class="center" style="margin-top:16px;">
+            <button class="secondary" id="backToHomeFromDifficulty">Back</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden">
+        <h2 id="gameTitle"></h2>
+        <div id="statusBar">
+            <div id="timerDisplay"></div>
+            <div id="scoreDisplay"></div>
+            <div id="seriesInfoDisplay"></div>
+        </div>
+        <div id="comboContainer" class="hidden">
+            <div id="comboFill"></div>
+        </div>
+        <div id="questionText"></div>
+        <input id="answerInput" type="text" autocomplete="off" placeholder="Type your answer and press Enter">
+        <div class="center" style="margin-top:10px;">
+            <button id="submitBtn">Submit</button>
+            <button id="passBtn" class="secondary hidden">Pass (-10s)</button>
+            <button id="skipBtn" class="secondary hidden">Skip (1x)</button>
+            <button class="secondary" id="inGameHomeBtn">Return Home</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="hidden">
+        <h2>Round Over</h2>
+        <div id="resultSummary" class="center"></div>
+        <div id="resultDetails"></div>
+        <div class="center" style="margin-top:16px;">
+            <button id="playAgainBtn">Play Again</button>
+            <button class="secondary" id="homeBtn">Return Home</button>
+        </div>
+    </div>
+
+    <!-- Description -->
+    <div id="modeDescriptionBox">
+        <p><span class="label">Countdown:</span> The goal is to get as many points as you can before the time runs out. Each correct answer grants one point. You will get bonus time as you answer more questions correctly in a row. When there is a wrong answer, the combo bar is depleted, and you lose 10 seconds.</p>
+        <p><span class="label">Frenzy:</span> The goal is to answer as many questions correctly in a row. With one wrong answer, the game ends. However, you can choose to skip one question using the skip button.</p>
+    </div>
+</div>
+
+<script>
+// ====== PASTE YOUR QUESTION SETS HERE ======
+const normalQuestionsText = `Name a city that was destroyed by fire and brimstone in Genesis (Sodom/Gomorrah)
+What town is Lazarus from in John (Bethany)
+What was the name of the queen who wanted to kill Elijah in 1 Kings (Jezebel)
+Name a weapon that Goliath carried when facing David (Sword/Spear/Javelin)
+In Hebrews, what is sharper than a two edged sword (Word of God)
+Which book mourns the destruction of Jerusalem (Lamentations)
+Which book has 50 chapters exactly (Genesis)
+How many husbands did Ruth have in total (2)
+In whose tomb was Jesus buried in (Joseph)
+What animal did the Holy Spirit descend as when Jesus was baptized (Dove)
+How many months were between Jesus and John the Baptist’s birth (6)
+ Who was imprisoned with Paul in Acts (Silas)
+ What is the name of Moses’ wife (Zipporah)
+ In 1 Timothy, what is the mediator between God and men (Jesus)
+ In Luke, what did Jesus say to seek first (The Kingdom of God)
+ How old was Moses when he died (120)
+ In John, what does Jesus refer to as ‘the helper’ (Holy Spirit)
+ In Exodus, God guided the Israelites at night with a pillar of what (Fire)
+ In Daniel, which king was driven from men and ate grass like oxen (Nebuchadnezzar)
+ In the gospels, the words on Jesus’ cross say the King of what (Jews)
+ In the creation, what did God create that divided the waters from the waters (Firmament)
+ What is the name referring to the stories that Jesus told as lessons (Parables)
+ How many epistles are there to John (3)
+ In Luke, what did Jesus’ sweat become when he was praying in the garden (Blood)
+ According to the Gospel of John, who was in charge of the money box (Judas)
+ Name a person who has had a covenant with God (Abraham/Noah/Moses/David)
+ Which body part did Jesus heal during Sabbath in Matthew (Hand)
+ What tree did Jesus curse in Gospel of Mark (Fig)
+ The son in the parable of the lost son is also known as the what son (Prodigal)
+ Which town rejected Jesus (Nazareth)
+ According to 1 Samuel, who stole the ark of the covenant (Philistines)
+ Who was the first person to be baptized in the New Testament (Jesus)
+ What was the first sentence God said in the Bible (Let there be light)
+ What is the body of Christ in Ephesians (The church)
+ According to 1 Corinthians, what will be the last enemy destroyed (Death)
+ In Isaiah, name one of the 7 gifts of the Holy Spirit (Wisdom/Understanding/Counsel/Might/Knowledge/Fear of the Lord)
+ What was Paul’s citizenship according to Acts (Roman)
+ In which direction did the wise men see Jesus’ star in Matthew (East)
+ What is the Hebrew word for father (Abba)
+ According to 2 Peter, with the Lord one day is as how many years (1000)
+ In Galatians, what will the person who sow to the flesh reap (Corruption)
+ In Acts, which sense did Saul lose in his conversion (Sight)
+ The Songs of Solomon is also known as the song of what (Songs)
+ In the Shepherd’s psalm, David will fear no evil when he walks through the valley of what (Shadow of death/Shadow of Death)
+ What should we overcome evil with according to Romans (Good)
+ How many days did Jesus fast in the wilderness for (40)
+ What tribe is Paul in the New Testament from (Benjamin)
+ Who was the first person to build an altar (Noah)
+Who was the only apostle to die of natural causes (John)
+Which gospel references the wedding at cana (John)
+How many gates does New Jerusalem have (12)
+Which King threw Daniel’s friends into the furnace (Nebuchadnezzar)
+Who was Israel’s first king (Saul)
+What city does ‘Jebus’ refer to (Jerusalem)
+How many tribes are there of Israel (12)
+Who was the King that beheaded John the Baptist (Herod)
+ Who was the last prophet (John the Baptist)
+ How is Abraham related to Lot (Uncle)
+ Who was Moses’ sister (Miriam)
+ What was the first thing God created (Light)
+ What did Jesus say if you are slapped on your right cheek (Turn the other cheek)
+ Who led the conquest of Canaan (Joshua)
+ How many days was Jonah in the whale (3)
+ What was Jesus’ occupation before preaching (Carpenter)
+ What seed did Jesus use to describe the kingdom of Heaven in a parable (Mustard)
+ How many figures did the King see were in the fire in Daniel (4)
+ What body part symbolizes Samson’s strength (Hair)
+ What animal of gold did the Israelites worship (Calf)
+ Which prophet wept for days and nights (Jeremiah)
+ Where was Jesus born (Bethlehem)
+ Which book does the phrase ‘Pride goes before Destruction’ come from (Proverbs)
+ Which book is the shortest in the bible (3 John)
+ What earthly substance did Jesus use to heal the blind man (Mud)
+ What was Abraham’s original name (Abram)
+ Which Testament is the book of Philemon in (New)
+ Who spoke during the Day of Pentecost (Peter)
+ Who was the only apostle to walk on water (Peter)
+ Which disciple was known as ‘the Zealot’ (Simon)
+ What is the punishment of cursing your parents according to the Old Testament (Death)
+ Who was Simon Peter’s brother (Andrew)
+ What did Joseph’s brothers throw him into (Pit/Well)
+ Name a person that appeared during Jesus’ transfiguration in Matthew (Elijah/Moses)
+ What number is used around 50 times in Revelations (7)
+ In Jesus’ first miracle, he turned water into what (Wine)
+ In Matthew, how many times should you forgive your brother (77/70 times 7)
+ How many years did the Israelites wander in the desert (40)
+ How many chapters are in Obadiah (1)
+ What colour horse does Jesus ride on in Revelations (White)
+ How many people did Jesus raise from the dead (3)
+ How many days did Jesus fast for (40)
+ Who was the Pharisee that defended Jesus (Nicodemus)
+ Which is the fourth book of the bible (Numbers)
+ What is the name of the silver coin used as currency in the bible (Shekel)
+What greenery did Moses see burning (Bush)
+Finish the scripture: ‘Follow Me, and I will make you fishers of’ (Men)
+In the Gospel of Mark, what colour clothing was Jesus forced to wear before the crucifixion (Purple)
+In Isaiah, the son of God will be a prince of what (Peace)
+What were the people from Ephesus called (Ephesians)
+How many books are in the bible (66)
+Which gospel is the shortest (Mark)
+Who was the first person to have their name changed by God (Abram/Abraham)
+ What did King Nebuchadnezzar and Daniel see on the wall (Writing)
+ Which New Testament book contains a story of someone falling asleep during a sermon then dying (Acts)
+ Who was the first person to be recorded drunk (Noah)
+ Which gospel contains the most parables by Jesus (Luke)
+ What are the people from the tribe of Simeon called (Simeonites/Simeonite)
+ Which book contains the Ten Commandments (Exodus)
+ What instrument did David play for King Saul (Harp)
+ Which disciple had a mother-in-law that was healed by Jesus (Peter)
+ How many times did God call Samuel before he realized God calling him (3)
+ In which book is the chapter known as the “Love Chapter” located in (1 Corinthians)
+ How many years did Jacob work to marry Rachel (14)
+ Which Jewish festival was Jesus crucified during (Passover)
+ What animal did Jesus ride on during his entry to Jerusalem (Donkey)
+ What is the first book of the New Testament (Matthew)
+ What event happened 50 days after Jesus’ resurrection (Pentecost)
+ How many sons did Noah have (3)
+ Who is generally considered the first Hebrew (Abraham)
+ What body part of Adam was used to create Eve (Rib)
+ Which tribe of Israel served as priests according to Numbers (Levi)
+ What day of the week is the Last Supper believed to be held (Thursday)
+ Who wrote the most books in the New Testament (Paul)
+ The Lord’s prayer originates from which Gospel (Matthew)
+ Which disciple is called ‘The Twin’ in John (Thomas)
+ Who found Moses in a basket (Pharaoh's daughter)
+ What is the name of the day of rest and worship in a week (Sabbath)
+ Which book is directly before Psalms (Job)
+ Who is considered to be the father of the 12 tribes of Israel (Jacob)
+ How many days was Lazarus dead for before his resurrection (4)
+ During Jesus’ arrest, what body part did Peter chop off from the high priest’s servant (Ear)
+ What did Solomon ask God for during a dream (Wisdom)
+ Name a book that is named after a woman (Ruth/Esther)
+ What sweet substance from an insect did John the Baptist eat in the wilderness (Wild honey/Honey)
+ Which apostle doubted Jesus’ resurrection (Thomas)
+ How many times did Peter deny knowing Jesus (3)
+ According to Matthew, what is the city that is set on a hill (Jerusalem)
+ What is the shortest verse of the bible (Jesus Wept)
+ What leaves did the Israelites welcome Jesus in Jerusalem (Palm)
+What is the last book of the Old Testament (Malachi)
+Which mountain did God give Moses the commandments (Sinai)
+Who was the disciple ‘whom Jesus loved’ (John)
+How many pieces of silver did Judas betray Jesus for (30)
+What food dropped from heaven in the desert (Bread/Manna)
+Which body part is the lamp of your body (Eye)
+What age did Jesus first preach in the temple (12)
+Which date of the month is Passover celebrated (14th)
+ Who was Elijah’s student (Elisha)
+ Which Old Testament book is most frequently quoted in the New (Psalms)
+ Who was the first high priest of Israel (Aaron)
+  Who wrote the majority of Psalms (David)
+ Who was known as Sarai originally (Sarah)
+ What is the last word of the Bible (Amen)
+ How many of the ten lepers healed return to Jesus (1)
+ Which sister was too focused on serving Jesus instead of listening (Martha)
+ Whose words were the Book of Proverbs from (Solomon)
+ Which river was Jesus baptized on (Jordan)
+ Which body part did God touch Jacob when wrestling him (Hip)
+ What was Paul’s original name (Saul)
+ Where did Mary and Joseph go in hiding with Jesus (Egypt)
+ Who did Joseph see beheaded in Pharaoh's dream (Chief Baker/Baker)
+ Who is Joseph to Isaac (Grandson)
+ Who was released instead of Jesus (Barabbas)
+ Which son did Isaac favor (Esau)
+ Which city falls in Revelations (Babylon)
+ Who was the angel that told Mary of Jesus’ conception (Gabriel)
+ What natural disaster aided the prisoner’s escape in Acts (Earthquake)
+ What tree was Adam and Eve forbidden to eat from (Knowledge of Good and Evil)
+ How many sets of brothers are there in the apostles (2)
+ Which river will be dried up in the book of Revelations (Euphrates)
+ What hour did Jesus die (9th)
+ How many fruits are in the Tree of Life (12)
+ What was the name of the tower built to reach heaven (Babel)
+ Which city was the first church built (Jerusalem)
+ How many years will Jesus reign in Revelations (1000)
+ Which part of the snake did Moses pick up to change it to a rod (Tail)
+ How many years of drought and plenty did the Pharaoh dream of (7)
+ What weapon guards the Garden of Eden (Flaming Sword)
+ How many loaves of bread was there during the Feeding of 5000 (5)
+ What did Jacob use to imitate Esau’s skin (Goat skin)
+ How many spies did Moses send to explore Canaan (12)
+ How many wives did David have (8)
+ Who did the Israelites defeat in the battle of Jericho (Canaanites)
+ What did the Jews put on their door during the tenth plague (Lamb’s blood/Blood)
+ How many days did rainfall for the great flood (40)
+ What was Jacob’s new name (Israel)
+ What language is the New Testament written (Greek)
+ What item of clothing did Jacob give Joseph (Coat)
+The unpardonable sin is doing what against the Holy Spirit (Blasphemy)
+Which book does the phrase ‘Faith, Hope, Love’ come from (1 Corinthians)
+Which animal did Jesus find a coin in to pay temple tax according to Matthew (Fish)
+In which book is the longest chapter of the Bible located (Psalms)
+Other than Jerusalem, which other place is named the ‘city of David’ (Bethlehem)
+God’s promise to Israel is a land flowing with what (Milk and honey)
+How Many Couples Entered Noah’s Ark (4)
+What does Immanuel mean (God with us)
+Who was Isaac’s wife (Rebecca)
+Who was the only non-disciple named in all 4 gospels (Pilate)
+Who said ‘Depart from me, for I am a sinful man, O Lord’ in the Gospel of Luke (Peter)
+ What mythical creature does both the book of Job and Psalm mention (Leviathan)
+What came abundantly out of the rock after Moses struck it with his rod (Water)
+Finish the scripture in Luke: Or if he asks for an egg, will he offer him a (Scorpion)
+How many psalms are there (150)
+What is the parable of the Good Samaritan’s main lesson (Mercy)
+In the book of Zechariah, what is ‘better than fasting’ (Obedience)
+According to Leviticus, who can eat the showbread in the temple (Priests)
+In Romans, what do tribulations produce (Perseverance)
+How many cubits long was Noah’s ark (300)
+Elijah called down what from heaven (Fire)
+According to 1 Timothy, the root of all evil is the love of what (Money)
+Which tribe is Samson from (Dan)
+What was Luke’s occupation according to the book of Colossians (Physician)
+Which city is known as the ‘city of palm trees’ in Deuteronomy (Jericho)
+What is the name of the creature of six wings described in Isaiah (Seraphim)
+What taste does the ‘little book’ have in the mouth in Revelations (Sweet)
+Zechariah saw a flying what (Scroll)
+What did the temple become when Jesus arrived in Jerusalem (Market)
+Which book is written to Gaius in the New Testament (3 John)
+What does the word ‘Shalom’ mean (Peace)
+In 1 Kings, which king built the first temple (Solomon)
+In Judges, what did Samson find inside the carcass of a lion (Honey)
+Which book contains the phrase “For everything there is a season” (Ecclesiastes)
+Whose Babylonian name was Belteshazzar (Daniel)
+According to Hebrews, without what it is impossible to please Him (Faith)
+In 1 Samuel, around how many cubits tall is Goliath (6)
+The Dead Sea is known as the what sea in the bible (Salt)
+Who’s wife turned into a pillar of salt for looking back while fleeing from destruction (Lot)
+In Genesis, who says “Am I my brother’s keeper” (Cain)
+Who was Seth’s father (Adam)
+In the Gospel of John, who asked Jesus ‘What is truth?’ (Pilate)
+According to the Gospel of Mark, James and John were named the “Sons of” what (Thunder)
+According to Jeremiah, the what is ‘deceitful above all things and desperately wicked’ (Heart)
+Which book contains the sentence “For I know the thoughts I think toward you, says the Lord” (Jeremiah)
+What sign did God show Noah to signify their covenant (Rainbow)
+By the Gospel of John, Jesus asked Peter to feed his what (Sheep)
+What came out of the sea according to Daniel’s vision (Beasts)
+In 2 Kings, what animal did Elisha call upon to attack the youths who were mocking him (Bear)
+In John, who was plotted to be killed by the chief priests due to influencing Jews to believe in Jesus (Lazarus)
+According to Romans, the law brings the knowledge of what (Sin)
+Which book does this phrase come from “O Lord, you have searched me and known me” (Psalms)
+According to Deuteronomy, who buried Moses (God)
+In John, Jesus used a what to drive out the money changers from the temple (Whip)
+According to Hebrews, what is the substance of things hoped for, the evidence of things not seen (Faith)
+What does James describe the tongue as (Fire)
+While Jesus was praying in the garden, what did he see the disciples doing (Sleeping)
+According to Ecclesiastes, what is better than weapons of war (Wisdom)
+Which prophet says “Though He slay me, yet will I trust Him” (Job)
+In Matthew, who did Jesus say was sitting in Moses’ seat (Pharisees)
+David was at the Tigris River after doing what for 3 weeks (Fasting)
+`;
+
+const expertQuestionsText = `According to Revelation, name one thing that will be no more in the new heaven and new earth (Death/Sorrow/Crying/Pain)
+What word in the bible starting with ‘W’ is an expression of grief (Woe)
+Name one of the people known as “the pillars” in Galatians (Peter/James/John)
+What is Naomi’s relationship with Ruth (Mother-in-law/Mother in law)
+Name one of the two pillars of the temple by Solomon in 1 Kings (Jachin/Boaz)
+Which city or town was Jacob’s well located in John (Samaria)
+According to Exodus, how shekels of silver was a slave worth (30)
+How many kings reigned in Judah at the time when the Lord came to Micah (3)
+According to Mark, how many demons did Jesus cast out of Mary Magdalene (7)
+What was Eve mother of (All living)
+Which book is the story of David and Goliath in (1 Samuel)
+What is the sword of the spirit (Word of God/Word of god/The word of God/The word of god)
+ Name a book that does not explicitly mention God’s name (Esther/Songs of Solomon)
+ What will the man who endures temptation receive in James (Crown of life)
+ Finish the scripture: For we walk by faith, not by what (Sight)
+ What is the name of the Jewish celebration in Esther to commemorate the saving of Jewish people (Purim)
+ How many locks of hair did Samson have (7)
+ What was the Jewish ruling council who persecuted Jesus (Sanhedrin)
+ In Esther, which king reigned over 127 provinces (Ahasuerus)
+ Which place did God prophesy about in Obadiah (Edom)
+ In Deuteronomy, after how many weeks of harvest does the Feast of Weeks start (7)
+ What was the name of the son that Noah cursed (Canaan)
+ Which book in the New Testament is addressed to the twelve tribes which are scattered abroad (James)
+ In 1 Kings, Ahab builds a house made of what (Ivory)
+ Who said “He must increase but I must decrease” in the Gospel of John (John the Baptist)
+ How old was Noah during the great flood (600)
+ Which bowl is where the sea turns to blood (2)
+ Which feast did Joseph and Mary lost Jesus in the Gospel of Luke (Passover)
+ What place did Esther become queen of (Persia)
+ Which disciple said that some of Paul’s teachings are hard to understand (Peter)
+ According to Judges, who killed 600 Philistines with an ox goad (Shamgar)
+ In Galatians, what was the name of Jesus’ brother (James)
+ In Acts, Barnabus is known as the son of what (Encouragement)
+ What is one thing God cannot do mentioned in Titus (Lie)
+ In Judges, what animal’s jawbone did Samson use to kill 1000 men (Donkey)
+ Which woman had two nations in her womb in Genesis (Rebekah)
+ What is a word that describes 50 years in Leviticus (Jubilee)
+ In Proverbs, what food gained by deceit is sweet to a man (Bread)
+ According to 2 Timothy, all scripture is given by the what of God (Inspiration)
+ How many languages was the Bible likely written in (3)
+ What did Zechariah see a man measuring (Jerusalem)
+ In 1 Chronicles, how many years did David reign in Jerusalem (33)
+ What was Abraham’s first son’s name (Ishmael)
+ In Ephesians, it says do not let the sun go down on your what (Wrath)
+ What is the last word of the Old Testament (Curse)
+ In Matthew, the man with five talents brought how many other talents (5)
+ When the seventh seal was opened, how many minutes of silence was there in Heaven (30)
+ Who said in Genesis, “Give me children or else I die” (Rachel)
+ Which prophet’s name means ‘My Angel” or “My messenger” (Malachi)
+ Which country is known for their cedar trees in the Old Testament (Lebanon)
+ In Matthew, what is the name of the group who says there is no resurrection (Sadducees)
+ In which direction of Eden is the garden located (East)
+ According to 1 Samuel, which tribe of Israel is the smallest (Benjamin)
+ According to Songs of Solomon, what is as cruel as the grave (Jealousy)
+ In Daniel, where did Nebuchadnezzar set up an image of gold (Babylon)
+ What object was Paul in when escaping Damascus (Basket)
+ Which book begins with “The words of the preacher” (Ecclesiastes)
+ Who is the great grandmother of King David (Ruth)
+ Which gospel is generally considered the earliest to be written (Mark)
+ What weapon did Elisha make float in 2 Kings (Axe)
+ Which book records the Ten Commandments for the second time (Deuteronomy)
+ In Nahum, Nineveh was nicknamed the what city (Bloody)
+What was the name of the type of writing that Paul wrote in the New Testament that also means ‘letter’ (Epistle)
+According to Matthew, the field bought with Judas’ bribe was named the field of what (Blood)
+Who was the high priest that tried Jesus (Caiaphas)
+What type of sedimentary rock did Isaiah see touch his lips? (Coal)
+Who was the brother that suggested to spare Joseph’s life and shed no blood (Reuben)
+ According to Romans, what is the wages of sin (Death)
+Where were followers first called Christians (Antioch)
+Name a friend of Daniel that was thrown into the furnace (Shadrach/Meshach/Abednego)
+What did ‘the sign of the prophet Jonah’ said by Jesus represent in the Gospel of Matthew (Resurrection)
+Which book is the longest book in the New Testament (Luke)
+According to Luke, what was the name of the person who helped Jesus carry the cross (Simon)
+ What possession of Aaron was in the ark of covenant according to Hebrews (Rod)
+ Which disciple is believed to be referred as ‘Nathanael’ in the Gospel of John (Bartholomew)
+ Who was David’s best friend (Jonathan)
+ How long was Hezekiah’s life extended according to 2 Kings (15 years)
+ Which gospel starts with “In the beginning was the Word”? (John)
+ Where is Simon Peter from (Bethsaida)
+ What was the name of John the Baptist’s father (Zechariah)
+ Which New Testament book contains a plea for a runaway slave (Philemon)
+ What natural object does the word ‘Cephas’ mean (Rock/Stone)
+ What symbolizes salvation in the armor of God (Helmet)
+ How many books is Moses believed to have written (5)
+ A person in the genealogy of Jesus shares a name with what fish (Salmon)
+ Which book contains the phrase ‘Faith without works is dead’ (James)
+ According to Proverbs 17, what ‘does good like medicine’ (A merry heart/Merry heart)
+ In Acts, what was Paul’s occupation (Tentmaker)
+ Which Gospel addresses the trinity that is the Father, the Son and the Holy Spirit (Matthew)
+ In Matthew, men shall not live by bread alone, but with the what of God (Word)
+ What was the name of Ruth’s first husband (Mahlon)
+ Who was the first person to die in the bible (Abel)
+ After Solomon’s death, Israel was divided into the Kingdoms of Israel and what (Judah)
+ Which tribe did the children of Israel unite to fight against in Judges (Benjamin)
+ Who hid the spies in Jericho in the book of Joshua (Rahab)
+ Which king in the Old Testament died by falling on his own sword (Saul)
+The light of the sun and moon in Revelation was replaced by the what of God (Glory)
+ In the Gospel of Mark, the eye of a what is easier for a camel’s eye to go through than for a rich man to enter the kingdom of God (Needle)
+ What is the name of David’s father (Jesse)
+ What was used to create Adam (Dust)
+ How many brothers did Jesus have according to the Gospel of Mark (4)
+ How many generations are between Adam and Noah (10)
+ What gift from the wise men signified Jesus’ future death and suffering (Myrrh)
+ The book of Nehemiah discusses the rebuilding of what structure in Jerusalem (Wall)
+ What occupation was Elymas, who was struck blind by Paul (Sorcerer)
+ Who was the Roman emperor during Jesus’ ministry in Luke (Tiberius Caesar)
+ Who is traditionally believed to have written the book of Acts (Luke)
+ Who was known as a ‘mighty hunter before the Lord’ (Nimrod)
+ What did God give Ezekiel that tasted like honey (Scroll)
+ According to Acts, who did God say was ‘a man after My own heart’? (David)
+ Which prophet saw a man with a measuring line (Zechariah)
+ Where did Moses flee to after killing an Egyptian (Midian)
+ In Revelation, Babylon was labelled the city of what (Harlots)
+ How many pieces of silver was Joseph sold for by his brothers (20)
+ Which book follows the book of Romans (1 Corinthians)
+ Who was the first disciple to be martyred (James)
+ In Acts, why was Ananius and his wife put to death (Lying)
+ According to Ecclesiastes, he who digs a pit will what (Fall into it)
+What did Gideon use to test God’s will (Fleece)
+ Who was the first judge of Israel (Othniel)
+ What was Amos’ job (Shepherd)
+What was the name of John the Baptist’s father (Zechariah)
+Where is Simon Peter from (Bethsaida)
+In Revelation, Babylon was labelled the city of what (Harlots)
+Which book contains the phrase ‘Faith without works is dead’ (James)
+Where did Moses flee to after killing an Egyptian (Midian)
+According to Proverbs 17, what ‘does good like medicine’ (A merry heart)
+Which Gospel addresses the trinity that is the Father, the Son and the Holy Spirit (Matthew)
+ What gift from the wise men signified Jesus’ future death and suffering (Myrrh)
+ Who was David’s best friend (Jonathan)
+ Who was known as a ‘mighty hunter before the Lord’ (Nimrod)
+ Where were followers first called Christians (Antioch)
+ What did God give Ezekiel that tasted like honey (Scroll)
+ How many generations are between Adam and Noah (10)
+ What is a word that describes 50 years in Leviticus (Jubilee)
+ What occupation was Elymas, who was struck blind by Paul (Sorcerer)
+ Which disciple is believed to be referred as ‘Nathanael’ in the Gospel of John (Bartholomew)
+ What was the name of the type of writing that Paul wrote in the New Testament that also means ‘letter’ (Epistle)
+ The book of Nehemiah discusses the rebuilding of what structure in Jerusalem (Wall)
+ Which book follows the book of Romans (1 Corinthians)
+ What symbolizes salvation in the armor of God (Helmet)
+ What possession of Aaron was in the ark of covenant according to Hebrews (Rod)
+ Who was the first person to die in the bible (Abel)
+ How many brothers did Jesus have according to the Gospel of Mark (4)
+ How many books did Solomon write (3)
+ According to Galatians, what will those who sow to the Spirit reap (Everlasting life)
+ What were the first three words of the Bible (In the beginning)
+ What colour was the priestly robe according to the book of Exodus (Blue)
+ Where was John when he wrote Revelations (Patmos)
+ Who anointed David to be King (Samuel)
+ What was the name of the Roman who ordered Jews to leave Rome (Claudius)
+ In Revelation, how many elders sit around God (24)
+ Which day did God create the sun, moon and stars (4)
+ What equipment did Jacob dream of that reached heaven (Ladder)
+ What was the name of the collection of Jewish manuscripts that contained the oldest manuscripts of the books of bible (Dead Sea Scrolls/Dead sea scrolls)
+ What type of animal brought Elijah bread and meat for food in 1 Kings (Raven)
+ What did Paul called himself ‘Chief of’ in the New Testament (Sinners)
+ Who is considered to be the first prophet (Abraham)
+ What is the name of the lost book mentioned in Joshua and 2 Samuel (Jasher)
+ Which tribe was the only tribe not given any land in the Book of Numbers (Levites)
+ How many hundred thousand people were redeemed in Revelation (144)
+ Which prophet was commanded to walk naked and barefoot for 3 years (Isaiah)
+ According to the Book of Jude, what was the name of the archangel that contended about the body of Moses (Michael)
+ What Hebrew word literally means the anointed one (Messiah)
+ What did Ezekiel see that followed the spirit of each living creature (Wheel)
+ What was the oil that Mary of Bethany anointed Jesus’ feet with in the Gospel of John (Spikenard)
+ In Acts, which continent did God forbid preaching in (Asia)
+ Which Old Testament character was described as ‘ruddy with bright eyes and good-looking’ according to 1 Samuel (David)
+ What fruit did God show Amos in the book of Amos (Summerfruit)
+ Finish the scripture ‘vanity of vanities, all is’ (Vanity)
+ According to Hebrews, what do the just live by (Faith)
+ Which prophet is believed to have written the book of Lamentations (Jeremiah)
+ Who said ‘Be doers of the word, and not hearers only’ (James)
+ What drink did the Roman soldiers give to Jesus on the cross in the Gospel of John (Wine/Sour wine)
+  Name one colour of the four horses that appeared out of the seals in Revelation (White/Red/Black/Pale)
+ What was the job of Zacchaeus who climbed up a tree to see Jesus in the Gospel of Luke (Tax Collector)
+ According to the book of Joel, what insect would cause significant damage to the earth (Locusts)
+ Whose name in the Old Testament meant ‘Father of many nations’ (Abraham)
+ What animal did Solomon use to compare his beloved’s eyes to (Dove)
+ How many weeks after Passover does the day of Pentecost lie on (7)
+ Which prophet was most known for questioning God? (Habakkuk)
+ In Haggai, what jewellery did God say to make Zerubbabel into? (Signet/Signet ring/Ring)
+In which book is Elijah taken to Heaven with Chariots of Fire (2 Kings)
+Who was Joseph’s real not half-brother (Benjamin)
+What instrument do the angels play in Revelations (Trumpet)
+Cain dwelled in the land of what after killing Abel (Nod)
+Who is the only Gentile to be anointed by God (Cyrus)
+How many years were the Israelites in Egypt (430)
+Who prophesied the virgin birth of Jesus (Isaiah)
+Who did Paul consider a true son of faith (Timothy)
+What did Ezekiel see a valley of (Dry bones)
+ What was Herod king of in New Testament (Judea)
+ What is the Hebrew name of God (Yahweh/YHWH)
+ Who was the only woman prophet and judge (Deborah)
+ What wood is the tabernacle traditionally made of (Acacia)
+ Which sea did Jesus walk on (Galilee)
+ What place did Jesus get arrested (Gethsemane)
+ What was the first plague of Egypt (Water to Blood)
+ According to John, who was first to see the resurrected Jesus (Mary Magdalene)
+ Which Hebrew word is a plea for salvation to the Lord (Hosanna)
+ In Acts, who was the first martyr (Stephen)
+ How many stones did Jacob put in his pouch to face Goliath (5)
+ Who travelled to challenge Solomon’s wisdom (Queen of Sheba)
+ Which Psalm is also known as the ‘Shepherd’s Psalm' (Psalms 23)
+ What was John the Baptist’s clothing made of (Camel’s hair/Hair)
+ Name an animal that David saved his sheep from (Lions/Bears)
+ Traditionally, how many days after birth should a baby be circumcised (8)
+ What did God create to save the Israelites from snakes (Bronze Serpent)
+ What did Hannah pray persistently for (A son/Samuel)
+ The mountain where Jesus prayed after the Last Supper is named the mount of what (Olives)
+ What plant is Moses’ baby basket made of (Bulrushes)
+ Who became king at eight years old (Josiah)
+ What age did Noah die (950)
+ Who did Laban give to Jacob instead of Rachel at first (Leah)
+ What offering is lifted up and motioned in different direction by priests (Wave)
+ Who prophesied that the Messiah would be born in Bethlehem (Micah)
+ Which place did God instruct Jonah to go to (Nineveh)
+ What disease did God give to those who stole the ark of covenant (Tumors)
+ Who was ‘perfect in his generations’ (Noah)
+ What American city is mentioned in Revelations (Philadelphia)
+ Finish the phrase in Philippians ‘to live is Christ, and to die is what’ (Gain)
+  Who suggested to Pharaoh that Joseph could interpret dreams (Cupbearer)
+ Who was Moses’ successor (Joshua)
+ Which book does the phrase ‘an eye for an eye’ come from (Leviticus)
+ Jesus’ last words on the cross references which Old Testament Book (Psalms)
+ In Matthew, if the blind lead the blind, what do they fall into (Ditch/Pit)
+ How many books are named after women in the bible (2)
+ Which tribe is Moses from (Levi)
+ Who was the replacement of Judas in Acts (Matthias)
+ How many times did David spare Saul (2)
+ Which apostle was a tax collector (Matthew)
+ What did Cain name the city he built (Enoch)
+ What did Adam and Eve use to cover themselves up (Fig Leaf)
+ What wood is Noah’s ark made of (Gopherwood)
+ What did Noah send out to look for land before the dove (Raven)
+ Which place was Saul baptized in Acts (Damascus)
+ Who threw Daniel with the lions (King Darius)
+ Who was the brave woman known as ‘Hadassah’ in the Old Testament (Esther)
+ Which land did God say Moses shall not enter (Canaan)
+ Who didn’t have to see Peter to know he has escaped prison at the gate (Rhoda)
+ Which prophet foretold Jesus’ arrival at Jerusalem (Zechariah)
+ Where was Jesus crucified (Golgotha)
+ Which modern day city in Greece appears in 1 Thessalonians (Athens)
+ According to 2 Corinthians how many times was Paul shipwrecked (3)
+ According to James, ‘You shall love your neighbor as yourself’ is called the what law (Royal)
+ In the book of 1 John, it is the only mention in the bible where it says God is what (Love)
+ What was the first bowl of the wrath of God in Revelation (Loathsome sores/Sores)
+ Which place was Paul shipwrecked for 3 months (Malta)
+ Who was the first known ‘evangelist’ in the book of Acts (Philip)
+ Who said ‘Depart from me, for I am a sinful man, O Lord’ in the Gospel of Luke (Peter)
+ What mythical creature does both the book of Job and Psalm mention (Leviathan)
+ What came abundantly out of the rock after Moses struck it with his rod (Water)
+ The thorns in the parable of the sower symbolise the what (World)
+ In Ecclesiastes, the medicine of life is a friend that is what (Faithful)
+ In Psalm 41 and Gospel of John, he who eats bread with Me has lifted his  what against me (Heel)
+ In the book of Acts, what was Felix’s job (Governor)
+ Who was the longest living man according to the bible, who lived 969 years (Methuselah)
+ How was Uzziah punished for entering the temple in 2 Chronicles (Leprosy)
+ According to Exodus, manna was as fine as what (Frost)
+ In Revelation, which church is said to have “left its first love” (Ephesus)
+ In Genesis, which mountain does Noah’s ark rest on (Ararat)
+ In Psalm 51 (A Prayer of Repentance) it says create in me a what heart (Clean)
+ According to the Gospel of Luke, who says “My soul magnifies the Lord” (Mary)
+ According to Job, which bird treats her young harshly (Ostrich)
+`;
+
+// ====== PARSING QUESTIONS ======
+function parseQuestions(rawText) {
+    // Split on actual newlines and filter out empty lines
+    const lines = rawText.split(/[\r\n]+/).map(l => l.trim()).filter(l => l.length > 0);
+    return lines.map(line => {
+        const openIndex = line.lastIndexOf('(');
+        const closeIndex = line.lastIndexOf(')');
+        if (openIndex === -1 || closeIndex === -1 || closeIndex < openIndex) {
+            return { question: line, answer: '' };
+        }
+        const question = line.slice(0, openIndex).trim();
+        const answer = line.slice(openIndex + 1, closeIndex).trim();
+        return { question, answer };
+    });
+}
+
+const normalQuestions = parseQuestions(normalQuestionsText);
+const expertQuestions = parseQuestions(expertQuestionsText);
+
+// ====== DOM ELEMENTS ======
+const homeScreen = document.getElementById('homeScreen');
+const difficultyScreen = document.getElementById('difficultyScreen');
+const gameScreen = document.getElementById('gameScreen');
+const resultScreen = document.getElementById('resultScreen');
+
+const selectedModeTitle = document.getElementById('selectedModeTitle');
+const gameTitle = document.getElementById('gameTitle');
+
+const timerDisplay = document.getElementById('timerDisplay');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const seriesInfoDisplay = document.getElementById('seriesInfoDisplay');
+
+const comboContainer = document.getElementById('comboContainer');
+const comboFill = document.getElementById('comboFill');
+
+const questionTextEl = document.getElementById('questionText');
+const answerInput = document.getElementById('answerInput');
+const messageEl = document.getElementById('message');
+const submitBtn = document.getElementById('submitBtn');
+const passBtn = document.getElementById('passBtn');
+const skipBtn = document.getElementById('skipBtn');
+
+const resultSummary = document.getElementById('resultSummary');
+const resultDetails = document.getElementById('resultDetails');
+
+const modeCountdownBtn = document.getElementById('modeCountdownBtn');
+const modeFrenzyBtn = document.getElementById('modeFrenzyBtn');
+const difficultyNormalBtn = document.getElementById('difficultyNormalBtn');
+const difficultyExpertBtn = document.getElementById('difficultyExpertBtn');
+const backToHomeFromDifficulty = document.getElementById('backToHomeFromDifficulty');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const homeBtn = document.getElementById('homeBtn');
+const inGameHomeBtn = document.getElementById('inGameHomeBtn');
+
+// ====== GAME LOGIC ======
+let currentMode = null;
+let currentDifficulty = null;
+let questions = [];
+let currentIndex = 0;
+let score = 0;
+let timerSeconds = 0;
+let timerInterval = null;
+
+let comboCount = 0;
+let comboTarget = 5;
+let bonusIndex = 0;
+const bonusSteps = [
+    { threshold: 5, bonus: 3 },
+    { threshold: 12, bonus: 5 },
+    { threshold: 20, bonus: 7 },
+    { threshold: 30, bonus: 10 }
+];
+let nextBonusValue = 3;
+
+let seriesStreak = 0;
+let skipUsed = false;
+
+// track used questions for current session (per mode/difficulty)
+let usedQuestionsNormalCountdown = [];
+let usedQuestionsExpertCountdown = [];
+let usedQuestionsNormalSeries = [];
+let usedQuestionsExpertSeries = [];
+
+// helpers to get / reset used arrays
+function getUsedQuestionsArray(mode, difficulty) {
+    if (mode === 'countdown' && difficulty === 'normal') return usedQuestionsNormalCountdown;
+    if (mode === 'countdown' && difficulty === 'expert') return usedQuestionsExpertCountdown;
+    if (mode === 'series' && difficulty === 'normal') return usedQuestionsNormalSeries;
+    if (mode === 'series' && difficulty === 'expert') return usedQuestionsExpertSeries;
+    return [];
+}
+
+function resetAllUsedQuestions() {
+    usedQuestionsNormalCountdown = [];
+    usedQuestionsExpertCountdown = [];
+    usedQuestionsNormalSeries = [];
+    usedQuestionsExpertSeries = [];
+}
+
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+// build a question set excluding ones used in this session for this mode/difficulty
+function buildQuestionSetForModeDifficulty(difficulty, mode) {
+    const baseQuestions = (difficulty === 'normal' ? normalQuestions : expertQuestions);
+    const used = getUsedQuestionsArray(mode, difficulty);
+    const filtered = baseQuestions.filter(q => !used.includes(q));
+    const source = filtered.length > 0 ? filtered : baseQuestions.slice();
+    const qs = source.slice();
+    shuffleArray(qs);
+    return qs;
+}
+
+function getHighScoreKey(mode, difficulty) {
+    return `bibleChase_highscore_${mode}_${difficulty}`;
+}
+function loadHighScore(mode, difficulty) {
+    const key = getHighScoreKey(mode, difficulty);
+    const value = localStorage.getItem(key);
+    return value ? parseInt(value, 10) : 0;
+}
+function saveHighScore(mode, difficulty, newScore) {
+    const key = getHighScoreKey(mode, difficulty);
+    const oldScoreRaw = localStorage.getItem(key);
+    const oldScore = oldScoreRaw ? parseInt(oldScoreRaw, 10) : null;
+    if (oldScore === null || newScore > oldScore) {
+        localStorage.setItem(key, String(newScore));
+        return newScore;
+    }
+    return oldScore;
+}
+
+function showScreen(screen) {
+    homeScreen.classList.add('hidden');
+    difficultyScreen.classList.add('hidden');
+    gameScreen.classList.add('hidden');
+    resultScreen.classList.add('hidden');
+    screen.classList.remove('hidden');
+}
+
+function goToDifficultySelection(mode) {
+    currentMode = mode;
+    selectedModeTitle.textContent = mode === 'countdown' ? 'Countdown Mode' : 'Frenzy Mode';
+    showScreen(difficultyScreen);
+}
+
+function startGame(difficulty) {
+    currentDifficulty = difficulty;
+    // fresh question set for this round, using session-used tracking
+    questions = buildQuestionSetForModeDifficulty(difficulty, currentMode);
+
+    currentIndex = 0;
+    score = 0;
+    messageEl.textContent = '';
+    answerInput.value = '';
+    answerInput.focus();
+
+    if (currentMode === 'countdown') {
+        timerSeconds = 120;
+        startCountdownTimer();
+        comboCount = 0;
+        bonusIndex = 0;
+        comboTarget = bonusSteps[0].threshold;
+        nextBonusValue = bonusSteps[0].bonus;
+        comboContainer.classList.remove('hidden');
+        passBtn.classList.remove('hidden');
+        comboContainer.classList.remove('combo-complete');
+        updateComboBar();
+        seriesInfoDisplay.textContent = '';
+        gameTitle.textContent = 'Countdown Mode';
+        skipBtn.classList.add('hidden');
+    } else {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerDisplay.textContent = '';
+        comboContainer.classList.add('hidden');
+        passBtn.classList.add('hidden');
+        seriesStreak = 0;
+        skipUsed = false;
+        skipBtn.disabled = false;
+        skipBtn.classList.remove('hidden');
+        updateSeriesInfo();
+        gameTitle.textContent = 'Frenzy Mode';
+    }
+
+    updateHUD();
+    loadQuestion();
+    showScreen(gameScreen);
+}
+
+function updateHUD() {
+    if (currentMode === 'countdown') {
+        timerDisplay.textContent = `Time: ${formatTime(timerSeconds)}`;
+        scoreDisplay.textContent = `Score: ${score}`;
+    } else {
+        timerDisplay.textContent = '';
+        scoreDisplay.textContent = `Correct in a row: ${seriesStreak}`;
+    }
+}
+
+function updateSeriesInfo() {
+    seriesInfoDisplay.textContent = currentMode === 'series'
+        ? (skipUsed ? 'Skip used' : 'Skip available')
+        : '';
+}
+
+function startCountdownTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timerSeconds--;
+        if (timerSeconds <= 0) {
+            timerSeconds = 0;
+            updateHUD();
+            clearInterval(timerInterval);
+            endGame('Time is up!');
+        } else updateHUD();
+    }, 1000);
+}
+
+function formatTime(totalSeconds) {
+    const m = Math.floor(totalSeconds / 60), s = totalSeconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function updateComboBar() {
+    comboFill.style.width = Math.min(100, (comboCount / comboTarget) * 100) + '%';
+}
+
+function handleCountdownCorrect() {
+    score++; comboCount++;
+    if (comboCount >= comboTarget) {
+        comboContainer.classList.add('combo-complete');
+        timerSeconds += nextBonusValue;
+        messageEl.textContent = `Correct! Time bonus: +${nextBonusValue}s`;
+        setTimeout(() => {
+            if (bonusIndex < bonusSteps.length - 1) {
+                bonusIndex++;
+                comboTarget = bonusSteps[bonusIndex].threshold;
+                nextBonusValue = bonusSteps[bonusIndex].bonus;
+            } else { 
+                comboTarget += 10; 
+                nextBonusValue = 10; 
+            }
+            comboCount = 0;
+            comboContainer.classList.remove('combo-complete');
+            updateComboBar();
+        }, 600);
+    } else {
+        messageEl.textContent = 'Correct!';
+        updateComboBar();
+        updateHUD();
+    }
+    updateHUD();
+}
+
+function handleCountdownWrong() {
+    comboCount = 0; 
+    comboTarget = bonusSteps[Math.min(bonusIndex, bonusSteps.length - 1)].threshold;
+    comboContainer.classList.remove('combo-complete');
+    updateComboBar(); 
+    timerSeconds -= 10; 
+    if (timerSeconds < 0) timerSeconds = 0;
+    messageEl.textContent = 'Incorrect! -10s'; 
+    updateHUD();
+    if (timerSeconds === 0) { 
+        clearInterval(timerInterval); 
+        endGame('No time left!'); 
+    }
+}
+
+function loadQuestion() {
+    if (currentIndex >= questions.length) {
+        // all questions for this mode/difficulty in this session are used; rebuild from remaining pool
+        questions = buildQuestionSetForModeDifficulty(currentDifficulty, currentMode);
+        currentIndex = 0;
+    }
+    questionTextEl.textContent = questions[currentIndex].question;
+}
+
+function checkAnswer() {
+    const userAnswer = answerInput.value.trim().toLowerCase();
+    if (!userAnswer) return;
+
+    const rawAnswer = questions[currentIndex].answer.toLowerCase();
+    const acceptableAnswers = rawAnswer.split('/').map(a => a.trim());
+    const isCorrect = acceptableAnswers.includes(userAnswer);
+
+    answerInput.value = '';
+
+    if (isCorrect) {
+        if (currentMode === 'countdown') {
+            handleCountdownCorrect(); 
+            currentIndex++; 
+            loadQuestion();
+        } else {
+            seriesStreak++; 
+            messageEl.textContent = 'Correct!'; 
+            updateHUD(); 
+            currentIndex++; 
+            loadQuestion();
+        }
+    } else {
+        if (currentMode === 'countdown') {
+            handleCountdownWrong(); 
+            currentIndex++; 
+            if (timerSeconds > 0) loadQuestion();
+        } else endGame('Wrong answer.');
+    }
+}
+
+function handlePass() {
+    if (currentMode !== 'countdown') return;
+    messageEl.textContent = 'Passed! -10s';
+    handleCountdownWrong(); 
+    currentIndex++; 
+    if (timerSeconds > 0) loadQuestion();
+}
+
+function handleSkip() {
+    if (currentMode !== 'series' || skipUsed) return;
+    skipUsed = true; 
+    skipBtn.disabled = true; 
+    updateSeriesInfo();
+    messageEl.textContent = 'Question skipped.'; 
+    currentIndex++; 
+    loadQuestion();
+}
+
+function endGame(reason) {
+    clearInterval(timerInterval); 
+    timerInterval = null; 
+    showScreen(resultScreen);
+    let thisScore; 
+    if (currentMode === 'countdown') { 
+        thisScore = score; 
+        resultSummary.textContent = `${reason} Your score: ${score}`; 
+    } else { 
+        thisScore = seriesStreak; 
+        resultSummary.textContent = `${reason} Your streak: ${seriesStreak}`; 
+    }
+
+    // mark the questions actually seen in this round as used for this mode/difficulty
+    const usedArr = getUsedQuestionsArray(currentMode, currentDifficulty);
+    questions.slice(0, currentIndex).forEach(q => {
+        if (!usedArr.includes(q)) usedArr.push(q);
+    });
+
+    saveHighScore(currentMode, currentDifficulty, thisScore);
+    const best = loadHighScore(currentMode, currentDifficulty);
+    const modeLabel = currentMode === 'countdown' ? 'Countdown' : 'Frenzy';
+    const diffLabel = currentDifficulty === 'normal' ? 'Normal' : 'Expert';
+    resultDetails.innerHTML = `
+        <p>Mode: <strong>${modeLabel}</strong></p>
+        <p>Difficulty: <strong>${diffLabel}</strong></p>
+        <p>Your score this round: <strong>${thisScore}</strong></p>
+        <p>Your best score for this mode & difficulty: <strong>${best}</strong></p>`;
+}
+
+// EVENTS
+modeCountdownBtn.addEventListener('click', () => goToDifficultySelection('countdown'));
+modeFrenzyBtn.addEventListener('click', () => goToDifficultySelection('series'));
+difficultyNormalBtn.addEventListener('click', () => startGame('normal'));
+difficultyExpertBtn.addEventListener('click', () => startGame('expert'));
+backToHomeFromDifficulty.addEventListener('click', () => { currentMode = null; showScreen(homeScreen); });
+submitBtn.addEventListener('click', checkAnswer);
+answerInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+passBtn.addEventListener('click', handlePass);
+skipBtn.addEventListener('click', handleSkip);
+playAgainBtn.addEventListener('click', () => { 
+    if (currentMode && currentDifficulty) {
+        startGame(currentDifficulty);
+    } else {
+        showScreen(homeScreen);
+    }
+});
+homeBtn.addEventListener('click', () => { 
+    clearInterval(timerInterval); 
+    resetAllUsedQuestions(); // returning home makes all questions available again
+    showScreen(homeScreen); 
+});
+inGameHomeBtn.addEventListener('click', () => { 
+    clearInterval(timerInterval); 
+    resetAllUsedQuestions(); // returning home makes all questions available again
+    showScreen(homeScreen); 
+});
+showScreen(homeScreen);
+</script>
+</body>
+</html>
