@@ -2,161 +2,568 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1d35">
 <title>Bible Chase</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
+    :root {
+        --navy:    #0b1d35;
+        --navy-mid:#122340;
+        --navy-light: #1a3358;
+        --gold:    #c9a84c;
+        --gold-bright: #e8c96a;
+        --gold-dim:#7a6130;
+        --white:   #f5f0e8;
+        --off-white: #ddd5c0;
+        --red:     #c0392b;
+        --green:   #1e8a5e;
+        --green-bright: #27ae7a;
+        --text-muted: #8a9bb5;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html {
+        height: -webkit-fill-available;
+    }
+
     body {
-        font-family: Georgia, sans-serif;
-        background: #f3f4f6;
+        font-family: 'Barlow', sans-serif;
+        background: var(--navy);
+        background-image:
+            radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.07) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 50%);
         margin: 0;
-        padding: 0;
+        padding: 16px 12px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        padding-top: calc(16px + env(safe-area-inset-top));
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
         min-height: 100vh;
+        min-height: -webkit-fill-available;
+        /* Prevent iOS bounce scroll interfering with game */
+        overscroll-behavior: none;
     }
+
     #app {
-        background: #ffffff;
-        padding: 20px 24px;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        max-width: 600px;
+        background: var(--navy-mid);
+        border: 1px solid rgba(201,168,76,0.25);
+        border-radius: 4px;
+        max-width: 580px;
         width: 100%;
-        box-sizing: border-box;
         position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.1);
     }
+
+    /* Gold top bar */
+    #app::before {
+        content: '';
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim));
+    }
+
+    .app-inner {
+        padding: 28px 28px 24px;
+    }
+
+    /* ── LOGO / TITLE ── */
+    .site-logo {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    .site-logo .title-main {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.8rem;
+        font-weight: 900;
+        color: var(--gold);
+        letter-spacing: 0.04em;
+        line-height: 1;
+        text-shadow: 0 2px 12px rgba(201,168,76,0.35);
+    }
+    .site-logo .title-sub {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.28em;
+        color: var(--off-white);
+        opacity: 0.65;
+        text-transform: uppercase;
+        display: block;
+        margin-top: 2px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+        border: none;
+        border-top: 1px solid rgba(201,168,76,0.2);
+        margin: 18px 0;
+    }
+
+    /* ── HEADINGS ── */
     h1, h2, h3 {
         text-align: center;
         margin-top: 0;
+        color: var(--white);
     }
-    .hidden {
-        display: none;
+    h2 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.35rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 20px;
     }
-    .center {
+    h3 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.78rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+    }
+
+    /* ── HIDDEN ── */
+    .hidden { display: none; }
+    .center  { text-align: center; }
+
+    /* ── MODE CARDS ── */
+    .mode-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 6px;
+    }
+    .mode-card {
+        background: var(--navy-light);
+        border: 1px solid rgba(201,168,76,0.2);
+        border-radius: 3px;
+        padding: 20px 14px 18px;
         text-align: center;
-    }
-    button {
-        padding: 10px 16px;
-        margin: 6px;
-        border-radius: 6px;
-        border: none;
         cursor: pointer;
-        background: #2563eb;
-        color: white;
-        font-size: 14px;
+        transition: border-color 0.18s, background 0.18s, transform 0.15s;
+        position: relative;
+        overflow: hidden;
+    }
+    .mode-card:hover {
+        border-color: var(--gold);
+        background: #1e3a62;
+        transform: translateY(-2px);
+    }
+    .mode-card .mode-icon {
+        font-size: 1.8rem;
+        display: block;
+        margin-bottom: 10px;
+        line-height: 1;
+    }
+    .mode-card .mode-name {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--gold);
+        display: block;
+        margin-bottom: 6px;
+    }
+    .mode-card .mode-tagline {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* ── DIFFICULTY BUTTONS ── */
+    .difficulty-btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .diff-btn {
+        padding: 14px 10px;
+        border: 1px solid rgba(201,168,76,0.25);
+        border-radius: 3px;
+        background: var(--navy-light);
+        color: var(--white);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .diff-btn:hover {
+        border-color: var(--gold);
+        background: #1e3a62;
+        color: var(--gold);
+    }
+    .diff-btn.expert {
+        border-color: rgba(192,57,43,0.4);
+    }
+    .diff-btn.expert:hover {
+        border-color: var(--red);
+        background: #2a1215;
+        color: #e74c3c;
+    }
+
+    /* ── GENERIC BUTTONS ── */
+    button {
+        padding: 10px 18px;
+        margin: 5px;
+        border-radius: 3px;
+        border: 1px solid rgba(201,168,76,0.3);
+        cursor: pointer;
+        background: var(--gold);
+        color: var(--navy);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        transition: all 0.15s;
+    }
+    button:hover:not(:disabled) {
+        background: var(--gold-bright);
+        box-shadow: 0 0 14px rgba(201,168,76,0.4);
     }
     button.secondary {
-        background: #6b7280;
+        background: transparent;
+        color: var(--text-muted);
+        border-color: rgba(138,155,181,0.3);
+    }
+    button.secondary:hover:not(:disabled) {
+        color: var(--white);
+        border-color: var(--text-muted);
+        box-shadow: none;
     }
     button:disabled {
-        background: #9ca3af;
+        background: transparent;
+        color: rgba(138,155,181,0.35);
+        border-color: rgba(138,155,181,0.15);
         cursor: default;
     }
-    #questionText {
-        margin: 20px 0;
-        font-size: 18px;
-        text-align: center;
+    #submitBtn {
+        min-width: 110px;
     }
-    #answerInput {
-        width: 100%;
-        padding: 10px;
-        font-size: 16px;
-        box-sizing: border-box;
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-    }
+
+    /* ── STATUS BAR ── */
     #statusBar {
         display: flex;
         justify-content: space-between;
-        margin-top: 12px;
-        font-size: 14px;
+        align-items: center;
+        margin-bottom: 14px;
+        gap: 8px;
     }
+    .stat-pill {
+        background: var(--navy-light);
+        border: 1px solid rgba(201,168,76,0.18);
+        border-radius: 2px;
+        padding: 6px 12px;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.92rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--gold);
+        min-width: 80px;
+        text-align: center;
+    }
+    #timerDisplay, #scoreDisplay, #seriesInfoDisplay {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--gold);
+        background: var(--navy-light);
+        border: 1px solid rgba(201,168,76,0.18);
+        border-radius: 2px;
+        padding: 6px 12px;
+    }
+    #timerDisplay:empty, #scoreDisplay:empty, #seriesInfoDisplay:empty {
+        display: none;
+    }
+
+    /* ── COMBO BAR ── */
     #comboContainer {
-        margin-top: 10px;
-        background: #e5e7eb;
-        border-radius: 6px;
-        height: 18px;
+        margin-bottom: 14px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 2px;
+        height: 6px;
         overflow: hidden;
         position: relative;
     }
     #comboFill {
         height: 100%;
         width: 0%;
-        background: #10b981;
-        transition: width 0.2s ease-in-out;
+        background: linear-gradient(90deg, var(--green), var(--green-bright));
+        transition: width 0.25s ease-out;
+        border-radius: 2px;
     }
     #comboContainer.combo-complete #comboFill {
         animation: comboComplete 0.6s ease-in-out;
     }
     @keyframes comboComplete {
-        0% { width: 100%; background: #10b981; transform: scaleX(1); }
-        20% { background: #f59e0b; transform: scaleX(1.05); }
-        40% { background: #f59e0b; transform: scaleX(1); }
-        60% { background: #10b981; transform: scaleX(1.02); }
-        100% { width: 0%; background: #10b981; transform: scaleX(1); }
+        0%   { width: 100%; background: linear-gradient(90deg, #1e8a5e, #27ae7a); }
+        30%  { background: linear-gradient(90deg, #c9a84c, #e8c96a); }
+        100% { width: 0%;   background: linear-gradient(90deg, #1e8a5e, #27ae7a); }
     }
-    #message {
-        margin-top: 12px;
-        text-align: center;
-        min-height: 20px;
-        font-size: 20px;
-    }
-    #resultDetails {
-        margin-top: 16px;
-        font-size: 15px;
+    .combo-label {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
     }
 
-    /* New: game mode description box at the bottom */
-    #modeDescriptionBox {
-        margin-top: 16px;
-        padding: 10px 12px;
-        font-size: 13px;
+    /* ── QUESTION ── */
+    #questionText {
+        margin: 0 0 18px;
+        font-size: 1.18rem;
+        font-weight: 500;
+        line-height: 1.5;
+        color: var(--white);
+        text-align: center;
+        background: var(--navy-light);
+        border-left: 3px solid var(--gold);
+        border-radius: 0 3px 3px 0;
+        padding: 16px 18px;
+    }
+
+    /* ── ANSWER INPUT ── */
+    #answerInput {
+        width: 100%;
+        padding: 14px 14px;
+        font-size: 16px; /* MUST be ≥16px to prevent iOS Safari auto-zoom */
+        font-family: 'Barlow', sans-serif;
+        font-weight: 500;
+        background: var(--navy-light);
+        border: 1px solid rgba(201,168,76,0.3);
+        border-radius: 3px;
+        color: var(--white);
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        /* iOS Safari resets */
+        -webkit-appearance: none;
+        -webkit-border-radius: 3px;
+        appearance: none;
+    }
+    #answerInput::placeholder { color: rgba(138,155,181,0.5); }
+    #answerInput:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+
+    /* ── MESSAGE ── */
+    #message {
+        margin-top: 14px;
+        text-align: center;
+        min-height: 24px;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--white);
+        transition: color 0.2s;
+    }
+    #message.correct { color: var(--green-bright); }
+    #message.wrong   { color: #e74c3c; }
+
+    /* ── RESULT SCREEN ── */
+    #resultSummary {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.5rem;
+        color: var(--gold);
+        margin-bottom: 16px;
         line-height: 1.4;
-        background: #f9fafb;
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-        color: #374151;
     }
-    #modeDescriptionBox h4 {
-        margin: 0 0 4px 0;
-        font-size: 13px;
-        font-weight: bold;
+    #resultDetails {
+        font-size: 0.92rem;
+        color: var(--off-white);
+        background: var(--navy-light);
+        border-radius: 3px;
+        padding: 14px 16px;
+        margin-top: 4px;
     }
-    #modeDescriptionBox p {
-        margin: 4px 0;
+    #resultDetails p { margin: 6px 0; color: var(--text-muted); }
+    #resultDetails strong { color: var(--gold); font-weight: 600; }
+
+    /* ── BACK BUTTON ROW ── */
+    .back-row {
+        margin-top: 18px;
+        text-align: center;
     }
+
+    /* ── DESCRIPTION BOX ── */
+    #modeDescriptionBox {
+        margin: 0;
+        padding: 16px 28px 20px;
+        font-size: 0.8rem;
+        line-height: 1.55;
+        background: rgba(0,0,0,0.25);
+        border-top: 1px solid rgba(201,168,76,0.12);
+        color: var(--text-muted);
+    }
+    #modeDescriptionBox p { margin: 5px 0; }
     #modeDescriptionBox span.label {
-        font-weight: bold;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-size: 0.82rem;
+    }
+
+    /* ── GAME TITLE ── */
+    #gameTitle {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--gold);
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    /* ── ACTION ROW ── */
+    .action-row {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 12px;
+    }
+
+    /* ── SELECTED MODE TITLE ── */
+    #selectedModeTitle {
+        color: var(--white);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.4rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+    }
+
+    /* ── TOUCH / MOBILE OPTIMISATIONS ── */
+
+    /* Prevent double-tap zoom on buttons and interactive elements */
+    button, .mode-card, .diff-btn {
+        touch-action: manipulation;
+    }
+
+    /* Ensure buttons have minimum touch target size (44px Apple HIG) */
+    button {
+        min-height: 44px;
+    }
+
+    /* iOS safe area for #app */
+    #app {
+        /* Extra bottom padding so content clears home indicator */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Keyboard-aware game screen: when keyboard is up on iOS,
+       keep the input and action row visible by making game screen scroll */
+    #gameScreen {
+        /* Allow the game screen itself to scroll if keyboard pushes content */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── RESPONSIVE: small phones (≤380px) ── */
+    @media (max-width: 380px) {
+        .app-inner { padding: 18px 16px 18px; }
+        .site-logo .title-main { font-size: 2.2rem; }
+        .mode-cards { gap: 10px; }
+        .mode-card { padding: 16px 10px 14px; }
+        .mode-card .mode-icon { font-size: 1.4rem; }
+        .mode-card .mode-name { font-size: 1rem; }
+        #questionText { font-size: 1rem; padding: 12px 14px; }
+        #modeDescriptionBox { padding: 14px 16px 18px; }
+        .difficulty-btns { gap: 8px; }
+    }
+
+    /* ── RESPONSIVE: standard mobile (≤480px) ── */
+    @media (max-width: 480px) {
+        body { padding: 8px 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        .app-inner { padding: 20px 18px 20px; }
+        .site-logo .title-main { font-size: 2.4rem; }
+        #statusBar { gap: 6px; }
+        #timerDisplay, #scoreDisplay, #seriesInfoDisplay {
+            font-size: 0.85rem;
+            padding: 5px 8px;
+        }
+        .action-row { gap: 6px; }
+        button { padding: 10px 12px; font-size: 0.85rem; }
+        #modeDescriptionBox { padding: 14px 18px 18px; font-size: 0.76rem; }
+    }
+
+    /* ── LANDSCAPE MOBILE: compact layout ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+        body { padding: 4px 8px; }
+        .app-inner { padding: 12px 18px; }
+        .site-logo { margin-bottom: 4px; }
+        .site-logo .title-main { font-size: 1.8rem; }
+        .site-logo .title-sub { display: none; }
+        .divider { margin: 10px 0; }
+        #questionText { padding: 10px 14px; margin-bottom: 10px; font-size: 1rem; }
+        #statusBar { margin-bottom: 8px; }
+        #comboContainer { margin-bottom: 8px; }
+        #message { margin-top: 8px; min-height: 18px; font-size: 0.95rem; }
+        #modeDescriptionBox { display: none; } /* hide in landscape to save space */
     }
 </style>
 </head>
 <body>
 <div id="app">
+    <div class="app-inner">
+
     <!-- Home Screen -->
     <div id="homeScreen">
-        <h1>Bible Chase</h1>
-        <div class="center">
-            <h3>Select Game Mode</h3>
-            <button id="modeCountdownBtn">Countdown</button>
-            <button id="modeFrenzyBtn">Frenzy</button>
+        <div class="site-logo">
+            <span class="title-main">Bible Chase</span>
+            <span class="title-sub">The Scripture Knowledge Challenge</span>
         </div>
+        <hr class="divider">
+        <h3>Select Game Mode</h3>
+        <div class="mode-cards">
+            <div class="mode-card" id="modeCountdownBtn">
+                <span class="mode-icon">⏱</span>
+                <span class="mode-name">Countdown</span>
+                <span class="mode-tagline">Race the clock — build combos to earn bonus time</span>
+            </div>
+            <div class="mode-card" id="modeFrenzyBtn">
+                <span class="mode-icon">🔥</span>
+                <span class="mode-name">Streak</span>
+                <span class="mode-tagline">One wrong answer ends it all — how far can you go?</span>
+            </div>
+        </div>
+        <!-- hidden real buttons kept for JS compatibility -->
+        <button id="_modeCountdownBtn_real" class="hidden"></button>
+        <button id="_modeFrenzyBtn_real" class="hidden"></button>
     </div>
 
     <!-- Difficulty Screen -->
     <div id="difficultyScreen" class="hidden">
         <h2 id="selectedModeTitle"></h2>
-        <div class="center">
-            <h3>Select Difficulty</h3>
-            <button id="difficultyNormalBtn">Normal</button>
-            <button id="difficultyExpertBtn">Expert</button>
+        <h3>Select Difficulty</h3>
+        <div class="difficulty-btns">
+            <button id="difficultyNormalBtn" class="diff-btn normal">Normal</button>
+            <button id="difficultyExpertBtn" class="diff-btn expert">Expert</button>
         </div>
-        <div class="center" style="margin-top:16px;">
-            <button class="secondary" id="backToHomeFromDifficulty">Back</button>
+        <div class="back-row">
+            <button class="secondary" id="backToHomeFromDifficulty">← Back</button>
         </div>
     </div>
 
     <!-- Game Screen -->
     <div id="gameScreen" class="hidden">
-        <h2 id="gameTitle"></h2>
+        <div id="gameTitle"></div>
         <div id="statusBar">
             <div id="timerDisplay"></div>
             <div id="scoreDisplay"></div>
@@ -166,12 +573,12 @@
             <div id="comboFill"></div>
         </div>
         <div id="questionText"></div>
-        <input id="answerInput" type="text" autocomplete="off" placeholder="Type your answer and press Enter">
-        <div class="center" style="margin-top:10px;">
+        <input id="answerInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" inputmode="text" placeholder="Type your answer…">
+        <div class="action-row">
             <button id="submitBtn">Submit</button>
-            <button id="passBtn" class="secondary hidden">Pass (-10s)</button>
-            <button id="skipBtn" class="secondary hidden">Skip (1x)</button>
-            <button class="secondary" id="inGameHomeBtn">Return Home</button>
+            <button id="passBtn" class="secondary hidden">Pass (−10s)</button>
+            <button id="skipBtn" class="secondary hidden">Skip (1×)</button>
+            <button class="secondary" id="inGameHomeBtn">Home</button>
         </div>
         <div id="message"></div>
     </div>
@@ -181,16 +588,18 @@
         <h2>Round Over</h2>
         <div id="resultSummary" class="center"></div>
         <div id="resultDetails"></div>
-        <div class="center" style="margin-top:16px;">
+        <div class="center" style="margin-top:20px;">
             <button id="playAgainBtn">Play Again</button>
             <button class="secondary" id="homeBtn">Return Home</button>
         </div>
     </div>
 
+    </div><!-- /.app-inner -->
+
     <!-- Description -->
     <div id="modeDescriptionBox">
         <p><span class="label">Countdown:</span> Get as many points as you can before the time runs out! Each correct answer grants one point. You will get bonus time as you answer more questions correctly in a row. When there is a wrong answer, the combo bar is depleted, and you lose 10 seconds.</p>
-        <p><span class="label">Frenzy:</span> Answer as many questions correctly in a row! With one wrong answer, the game ends. However, you can choose to skip one question, so use it carefully!</p>
+        <p><span class="label">Streak:</span> Answer as many questions correctly in a row! With one wrong answer, the game ends. However, you can choose to skip one question, so use it carefully!</p>
     </div>
 </div>
 
@@ -854,11 +1263,13 @@ function showScreen(screen) {
     gameScreen.classList.add('hidden');
     resultScreen.classList.add('hidden');
     screen.classList.remove('hidden');
+    // Scroll to top of app on every screen change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function goToDifficultySelection(mode) {
     currentMode = mode;
-    selectedModeTitle.textContent = mode === 'countdown' ? 'Countdown Mode' : 'Frenzy Mode';
+    selectedModeTitle.textContent = mode === 'countdown' ? 'Countdown Mode' : 'Streak Mode';
     showScreen(difficultyScreen);
 }
 
@@ -870,7 +1281,9 @@ function startGame(difficulty) {
     currentIndex = 0;
     score = 0;
     messageEl.textContent = '';
+    messageEl.className = '';
     answerInput.value = '';
+    // focus() here works because startGame is called from a click handler (user gesture)
     answerInput.focus();
 
     if (currentMode === 'countdown') {
@@ -898,7 +1311,7 @@ function startGame(difficulty) {
         skipBtn.disabled = false;
         skipBtn.classList.remove('hidden');
         updateSeriesInfo();
-        gameTitle.textContent = 'Frenzy Mode';
+        gameTitle.textContent = 'Streak Mode';
     }
 
     updateHUD();
@@ -950,6 +1363,7 @@ function handleCountdownCorrect() {
         comboContainer.classList.add('combo-complete');
         timerSeconds += nextBonusValue;
         messageEl.textContent = `Correct! Time bonus: +${nextBonusValue}s`;
+        messageEl.className = 'correct';
         setTimeout(() => {
             if (bonusIndex < bonusSteps.length - 1) {
                 bonusIndex++;
@@ -965,6 +1379,7 @@ function handleCountdownCorrect() {
         }, 600);
     } else {
         messageEl.textContent = 'Correct!';
+        messageEl.className = 'correct';
         updateComboBar();
         updateHUD();
     }
@@ -978,7 +1393,8 @@ function handleCountdownWrong() {
     updateComboBar(); 
     timerSeconds -= 10; 
     if (timerSeconds < 0) timerSeconds = 0;
-    messageEl.textContent = 'Incorrect! -10s'; 
+    messageEl.textContent = 'Incorrect! −10s'; 
+    messageEl.className = 'wrong';
     updateHUD();
     if (timerSeconds === 0) { 
         clearInterval(timerInterval); 
@@ -1012,7 +1428,8 @@ function checkAnswer() {
             loadQuestion();
         } else {
             seriesStreak++; 
-            messageEl.textContent = 'Correct!'; 
+            messageEl.textContent = 'Correct!';
+            messageEl.className = 'correct';
             updateHUD(); 
             currentIndex++; 
             loadQuestion();
@@ -1028,7 +1445,8 @@ function checkAnswer() {
 
 function handlePass() {
     if (currentMode !== 'countdown') return;
-    messageEl.textContent = 'Passed! -10s';
+    messageEl.textContent = 'Passed! −10s';
+    messageEl.className = 'wrong';
     handleCountdownWrong(); 
     currentIndex++; 
     if (timerSeconds > 0) loadQuestion();
@@ -1039,7 +1457,8 @@ function handleSkip() {
     skipUsed = true; 
     skipBtn.disabled = true; 
     updateSeriesInfo();
-    messageEl.textContent = 'Question skipped.'; 
+    messageEl.textContent = 'Question skipped.';
+    messageEl.className = '';
     currentIndex++; 
     loadQuestion();
 }
@@ -1065,7 +1484,7 @@ function endGame(reason) {
 
     saveHighScore(currentMode, currentDifficulty, thisScore);
     const best = loadHighScore(currentMode, currentDifficulty);
-    const modeLabel = currentMode === 'countdown' ? 'Countdown' : 'Frenzy';
+    const modeLabel = currentMode === 'countdown' ? 'Countdown' : 'Streak';
     const diffLabel = currentDifficulty === 'normal' ? 'Normal' : 'Expert';
     resultDetails.innerHTML = `
         <p>Mode: <strong>${modeLabel}</strong></p>
@@ -1075,8 +1494,8 @@ function endGame(reason) {
 }
 
 // EVENTS
-modeCountdownBtn.addEventListener('click', () => goToDifficultySelection('countdown'));
-modeFrenzyBtn.addEventListener('click', () => goToDifficultySelection('series'));
+document.getElementById('modeCountdownBtn').addEventListener('click', () => goToDifficultySelection('countdown'));
+document.getElementById('modeFrenzyBtn').addEventListener('click', () => goToDifficultySelection('series'));
 difficultyNormalBtn.addEventListener('click', () => startGame('normal'));
 difficultyExpertBtn.addEventListener('click', () => startGame('expert'));
 backToHomeFromDifficulty.addEventListener('click', () => { currentMode = null; showScreen(homeScreen); });
@@ -1093,14 +1512,55 @@ playAgainBtn.addEventListener('click', () => {
 });
 homeBtn.addEventListener('click', () => { 
     clearInterval(timerInterval); 
-    resetAllUsedQuestions(); // returning home makes all questions available again
+    resetAllUsedQuestions();
     showScreen(homeScreen); 
 });
 inGameHomeBtn.addEventListener('click', () => { 
     clearInterval(timerInterval); 
-    resetAllUsedQuestions(); // returning home makes all questions available again
+    resetAllUsedQuestions();
     showScreen(homeScreen); 
 });
+
+// ── iOS / MOBILE FOCUS HELPER ──
+// On iOS Safari, programmatic focus() only opens the keyboard when called
+// synchronously inside a user-gesture (touch/click) handler.
+// We call focusInput() at the END of every user-initiated action so the
+// call stack is still within the gesture, which satisfies iOS's requirement.
+function focusInput() {
+    answerInput.removeAttribute('readonly');
+    answerInput.focus();
+    // Scroll the input into view so it's above the software keyboard
+    setTimeout(() => {
+        answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+
+// Re-focus input after Submit, Pass, Skip (desktop + mobile)
+submitBtn.addEventListener('click', focusInput);
+passBtn.addEventListener('click', focusInput);
+skipBtn.addEventListener('click', focusInput);
+
+// Difficulty buttons trigger startGame which calls answerInput.focus() —
+// but we also attach a direct listener here to cover iOS timing
+difficultyNormalBtn.addEventListener('click', () => setTimeout(focusInput, 50));
+difficultyExpertBtn.addEventListener('click', () => setTimeout(focusInput, 50));
+
+// Play Again re-focus
+playAgainBtn.addEventListener('click', () => setTimeout(focusInput, 50));
+
+// Tapping the question box focuses the input (helpful on mobile)
+document.getElementById('questionText').addEventListener('click', focusInput);
+
+// Prevent iOS from scrolling the page when the keyboard opens
+// by keeping focus on the input and not on the body
+document.addEventListener('focusin', (e) => {
+    if (e.target === answerInput) {
+        setTimeout(() => {
+            answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300); // 300ms lets iOS keyboard animation finish
+    }
+});
+
 showScreen(homeScreen);
 </script>
 </body>
